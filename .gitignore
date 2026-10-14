@@ -1,0 +1,78 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Distribution / packaging ───────────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+wheels/
+
+# ── Environment variables (never commit secrets) ───────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Flask / app runtime ────────────────────────────────────────────────────────
+instance/
+.webassets-cache
+*.db
+*.sqlite
+*.sqlite3
+.cache.sqlite
+
+# ── ML model files (too large for GitHub) ─────────────────────────────────────
+*.keras
+*.pkl
+
+# ── Large media files ──────────────────────────────────────────────────────────
+*.mp4
+*.mov
+*.avi
+
+# ── Runtime generated images ──────────────────────────────────────────────────
+satellite_image.png
+
+# ── Jupyter Notebooks ─────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Testing & coverage ─────────────────────────────────────────────────────────
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+nosetests.xml
+coverage.xml
+
+# ── Type checkers & linters ────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+
+# ── OS generated ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+pip-log.txt

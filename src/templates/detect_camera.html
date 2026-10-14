@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}Camera Detection{% endblock %}
+
+{% block extra_head %}
+<style>
+    .page-wrap {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 4rem;
+    }
+    @media (max-width: 767px) { .page-wrap { padding: 1.5rem 1rem 2rem; } }
+
+    /* ── Page Header ───────────────────────────────────────────── */
+    .page-header { margin-bottom: 2rem; }
+
+    .page-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(79,163,224,0.12);
+        border: 1px solid rgba(79,163,224,0.25);
+        color: var(--accent-blue);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.3rem 0.85rem;
+        border-radius: 999px;
+        margin-bottom: 0.85rem;
+        letter-spacing: 0.05em;
+    }
+
+    .page-title {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.4rem;
+    }
+
+    .page-title span { color: var(--accent-blue); }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    /* ── Upload Card ───────────────────────────────────────────── */
+    .card-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .upload-zone {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        min-height: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        position: relative;
+        overflow: hidden;
+        background: rgba(255,255,255,0.02);
+    }
+
+    .upload-zone:hover {
+        border-color: var(--accent-blue);
+        background: rgba(79,163,224,0.04);
+    }
+
+    .upload-zone.has-image { border-style: solid; border-color: var(--accent-blue); }
+
+    .upload-icon {
+        width: 56px;
+        height: 56px;
+        background: rgba(79,163,224,0.12);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--accent-blue);
+    }
+
+    .upload-label {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .upload-hint {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    #uploadedImage {
+        max-width: 100%;
+        max-height: 280px;
+        border-radius: 10px;
+        object-fit: contain;
+        display: none;
+    }
+
+    #imageInput { display: none; }
+
+    /* ── Predict Button ────────────────────────────────────────── */
+    .predict-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 0.85rem;
+        background: var(--accent-blue);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.2s;
+        letter-spacing: 0.03em;
+        margin-top: 1.25rem;
+    }
+
+    .predict-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .predict-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* ── Result Card ───────────────────────────────────────────── */
+    .result-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.75rem 2rem;
+    }
+
+    .result-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+    }
+
+    #predictionResult {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 1.25rem;
+    }
+
+    .confidence-wrap { margin-top: 0.5rem; }
+
+    .confidence-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+    }
+
+    .confidence-track {
+        background: var(--bg-secondary);
+        border-radius: 999px;
+        height: 10px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+    #confidenceBar {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--accent-green);
+        width: 0%;
+        transition: width 0.6s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-badge"><i class="fas fa-camera"></i> Camera AI</div>
+        <h1 class="page-title">Camera <span>Detection</span></h1>
+        <p class="page-subtitle">Upload an image from a camera or drone to check for wildfire activity.</p>
+    </div>
+
+    <!-- Upload -->
+    <div class="card-panel">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()">
+            <div class="upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+            <div class="upload-label">Click to upload an image</div>
+            <div class="upload-hint">PNG, JPG, WEBP supported</div>
+            <img id="uploadedImage" src="#" alt="Uploaded Image">
+        </div>
+        <input type="file" id="imageInput" accept="image/*" />
+        <button class="predict-btn" id="predictBtn" disabled>
+            <i class="fas fa-fire"></i> Detect Wildfire
+        </button>
+    </div>
+
+    <!-- Result -->
+    <div class="result-panel">
+        <div class="result-label">Prediction Result</div>
+        <div id="predictionResult">Upload an image and click Detect Wildfire.</div>
+        <div class="confidence-wrap">
+            <div class="confidence-label">
+                <span>Confidence</span>
+                <span id="confidenceText">—</span>
+            </div>
+            <div class="confidence-track">
+                <div id="confidenceBar"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+
+<script>
+    const zone = document.getElementById('uploadZone');
+    const input = document.getElementById('imageInput');
+    const img = document.getElementById('uploadedImage');
+    const btn = document.getElementById('predictBtn');
+
+    input.addEventListener('change', () => {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                img.src = e.target.result;
+                img.style.display = 'block';
+                zone.querySelector('.upload-icon').style.display = 'none';
+                zone.querySelector('.upload-label').style.display = 'none';
+                zone.querySelector('.upload-hint').style.display = 'none';
+                zone.classList.add('has-image');
+                btn.disabled = false;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}Wildfire Detection{% endblock %} | Wildfire Detection</title>
+
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           RESET & TOKENS
+        ═══════════════════════════════════════════════════════════ */
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        :root {
+            --bg-primary:    #0d1117;
+            --bg-secondary:  #161b22;
+            --bg-card:       #1c2333;
+            --accent-orange: #ff6b35;
+            --accent-blue:   #4fa3e0;
+            --accent-green:  #3ecf8e;
+            --accent-purple: #a855f7;
+            --text-primary:  #e6edf3;
+            --text-muted:    #8b949e;
+            --border:        #30363d;
+            --nav-h:         64px;       /* desktop top navbar height  */
+            --bottom-nav-h:  64px;       /* mobile bottom navbar height */
+            --safe-bottom:   env(safe-area-inset-bottom, 0px); /* iPhone notch */
+        }
+
+        html { scroll-behavior: smooth; }
+
+        html, body {
+            min-height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        main { flex: 1; }
+
+        img { max-width: 100%; display: block; }
+
+        /* ── Scrollbar ──────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ── Page fade-in ───────────────────────────────────────── */
+        @keyframes pageFadeIn {
+            from { opacity:0; transform:translateY(8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        main { animation: pageFadeIn 0.4s ease both; }
+
+        /* ═══════════════════════════════════════════════════════════
+           DESKTOP TOP NAVBAR  (≥ 768px)
+        ═══════════════════════════════════════════════════════════ */
+        .top-navbar {
+            height: var(--nav-h);
+            position: sticky;
+            top: 0;
+            z-index: 300;
+            background: rgba(13,17,23,0.82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 1px 0 rgba(79,163,224,0.08), 0 4px 24px rgba(0,0,0,0.4);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .top-navbar.scrolled {
+            background: rgba(13,17,23,0.97);
+            box-shadow: 0 1px 0 rgba(79,163,224,0.14), 0 6px 32px rgba(0,0,0,0.6);
+        }
+
+        .top-navbar-inner {
+            max-width: 1280px;
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Brand */
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+        .brand-icon-wrap {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 12px rgba(255,107,53,0.4);
+            transition: box-shadow 0.3s, transform 0.3s;
+            flex-shrink: 0;
+        }
+        .brand-icon-wrap img { width:100%; height:100%; object-fit:contain; }
+        .navbar-brand:hover .brand-icon-wrap {
+            box-shadow: 0 0 22px rgba(255,107,53,0.7);
+            transform: scale(1.08) rotate(-3deg);
+        }
+        .brand-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        .brand-text span { color: var(--accent-blue); }
+
+        /* Pill group */
+        .nav-pill-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 4px;
+        }
+        .nav-pill-link {
+            position: relative;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.42rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: color 0.2s, background 0.2s;
+            white-space: nowrap;
+        }
+        .nav-pill-link i { font-size: 0.82rem; transition: transform 0.25s; }
+        .nav-pill-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.07); }
+        .nav-pill-link:hover i { transform: scale(1.2); }
+        .nav-pill-link.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(79,163,224,0.28), rgba(79,163,224,0.12));
+            border: 1px solid rgba(79,163,224,0.25);
+        }
+        .nav-pill-link.active i { color: var(--accent-blue); }
+        .nav-pill-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 50%;
+            transform: translateX(-50%);
+            width: 16px; height: 2px;
+            background: var(--accent-blue);
+            border-radius: 2px;
+        }
+
+        /* Live badge */
+        .nav-live {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0.35rem 0.85rem;
+            background: rgba(62,207,142,0.08);
+            border: 1px solid rgba(62,207,142,0.18);
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            flex-shrink: 0;
+        }
+        @keyframes pulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:0.4; transform:scale(0.75); }
+        }
+        .live-dot {
+            width: 7px; height: 7px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE BOTTOM NAVBAR  (< 768px)
+        ═══════════════════════════════════════════════════════════ */
+        .bottom-navbar {
+            display: none; /* hidden on desktop */
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 300;
+            height: calc(var(--bottom-nav-h) + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom);
+            background: rgba(13,17,23,0.97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+        }
+
+        .bottom-navbar-inner {
+            height: var(--bottom-nav-h);
+            display: flex;
+            align-items: stretch;
+        }
+
+        .bottom-nav-link {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.68rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bottom-nav-link i {
+            font-size: 1.2rem;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .bottom-nav-link:active i { transform: scale(0.9); }
+
+        /* active indicator — glowing dot above icon */
+        .bottom-nav-link.active {
+            color: var(--accent-blue);
+        }
+        .bottom-nav-link.active::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            width: 20px; height: 3px;
+            background: var(--accent-blue);
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 0 8px rgba(79,163,224,0.8);
+        }
+        .bottom-nav-link.active i { color: var(--accent-blue); }
+
+        /* ── Add bottom padding on mobile so content isn't behind nav ── */
+        @media (max-width: 767px) {
+            .top-navbar  { display: none; }
+            .bottom-navbar { display: block; }
+            .mobile-top-bar { display: flex; }
+            main { padding-bottom: var(--bottom-nav-h); }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           MOBILE TOP BAR (logo + title on mobile)
+        ═══════════════════════════════════════════════════════════ */
+        .mobile-top-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: rgba(13,17,23,0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 299;
+        }
+
+        .mobile-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .mobile-brand-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(255,107,53,0.4);
+        }
+        .mobile-brand-icon img { width:100%; height:100%; object-fit:contain; }
+        .mobile-brand-text {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        .mobile-brand-text span { color: var(--accent-blue); }
+
+        .mobile-live {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            background: rgba(62,207,142,0.08);
+            border: 1px solid rgba(62,207,142,0.2);
+            border-radius: 999px;
+            padding: 0.25rem 0.6rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           FOOTER
+        ═══════════════════════════════════════════════════════════ */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 1.4rem 2rem;
+        }
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .footer-left { color: var(--text-muted); font-size: 0.83rem; }
+        .footer-left strong { color: var(--text-primary); }
+        .footer-right { display: flex; align-items: center; gap: 6px; }
+        .footer-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .footer-tag i { font-size: 0.7rem; }
+        .footer-tag.tag-tf i { color: #ff6f00; }
+        .footer-tag.tag-py i { color: #4fa3e0; }
+
+        @media (max-width: 500px) {
+            .footer { padding: 1.2rem 1rem; }
+            .footer-inner { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           GLOBAL ANIMATION UTILITIES
+        ═══════════════════════════════════════════════════════════ */
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .anim-fade-up { opacity:0; animation: fadeUp 0.5s ease forwards; }
+        .anim-delay-1 { animation-delay: 0.05s; }
+        .anim-delay-2 { animation-delay: 0.12s; }
+        .anim-delay-3 { animation-delay: 0.19s; }
+        .anim-delay-4 { animation-delay: 0.26s; }
+
+        /* Responsive container utility */
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        @media (max-width: 480px) { .container { padding: 0 1rem; } }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- ══ DESKTOP TOP NAVBAR ══════════════════════════════════════ -->
+    <nav class="top-navbar" id="topNav">
+        <div class="top-navbar-inner">
+            <a href="{{ url_for('home') }}" class="navbar-brand">
+                <div class="brand-icon-wrap">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                </div>
+                <span class="brand-text">Wildfire <span>Detection</span></span>
+            </a>
+
+            <div class="nav-pill-group">
+                <a href="{{ url_for('home') }}"
+                   class="nav-pill-link {% if request.endpoint == 'home' %}active{% endif %}">
+                    <i class="fas fa-house"></i> Home
+                </a>
+                <a href="{{ url_for('detect_camera') }}"
+                   class="nav-pill-link {% if request.endpoint == 'detect_camera' %}active{% endif %}">
+                    <i class="fas fa-camera"></i> Camera
+                </a>
+                <a href="{{ url_for('detect_satellite') }}"
+                   class="nav-pill-link {% if request.endpoint == 'detect_satellite' %}active{% endif %}">
+                    <i class="fas fa-satellite"></i> Satellite
+                </a>
+                <a href="{{ url_for('alert') }}"
+                   class="nav-pill-link {% if request.endpoint == 'alert' %}active{% endif %}">
+                    <i class="fas fa-bell"></i> Alerts
+                </a>
+            </div>
+
+            <div class="nav-live">
+                <span class="live-dot"></span> System Live
+            </div>
+        </div>
+    </nav>
+
+    <!-- ══ MOBILE TOP BAR (logo only) ═════════════════════════════ -->
+    <div class="mobile-top-bar">
+        <a href="{{ url_for('home') }}" class="mobile-brand">
+            <div class="mobile-brand-icon">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
+            <span class="mobile-brand-text">Wildfire <span>Detection</span></span>
+        </a>
+        <div class="mobile-live">
+            <span class="live-dot"></span> Live
+        </div>
+    </div>
+
+    <!-- ══ PAGE CONTENT ═══════════════════════════════════════════ -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ══ FOOTER ══════════════════════════════════════════════════ -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <span class="footer-left">
+                Crafted with care &copy; 2024 &nbsp;·&nbsp;
+                Built by <strong>Touseef Ur Rehman</strong>
+            </span>
+            <div class="footer-right">
+                <span class="footer-tag tag-py"><i class="fab fa-python"></i> Python</span>
+                <span class="footer-tag tag-fl"><i class="fas fa-flask"></i> Flask</span>
+                <span class="footer-tag tag-tf"><i class="fas fa-brain"></i> TensorFlow</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ══ MOBILE BOTTOM NAVBAR ════════════════════════════════════ -->
+    <nav class="bottom-navbar">
+        <div class="bottom-navbar-inner">
+            <a href="{{ url_for('home') }}"
+               class="bottom-nav-link {% if request.endpoint == 'home' %}active{% endif %}">
+                <i class="fas fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="{{ url_for('detect_camera') }}"
+               class="bottom-nav-link {% if request.endpoint == 'detect_camera' %}active{% endif %}">
+                <i class="fas fa-camera"></i>
+                <span>Camera</span>
+            </a>
+            <a href="{{ url_for('detect_satellite') }}"
+               class="bottom-nav-link {% if request.endpoint == 'detect_satellite' %}active{% endif %}">
+                <i class="fas fa-satellite"></i>
+                <span>Satellite</span>
+            </a>
+            <a href="{{ url_for('alert') }}"
+               class="bottom-nav-link {% if request.endpoint == 'alert' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span>Alerts</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        // Desktop: darken navbar on scroll
+        const topNav = document.getElementById('topNav');
+        if (topNav) {
+            window.addEventListener('scroll', () => {
+                topNav.classList.toggle('scrolled', window.scrollY > 10);
+            }, { passive: true });
+        }
+    </script>
+
+</body>
+</html>

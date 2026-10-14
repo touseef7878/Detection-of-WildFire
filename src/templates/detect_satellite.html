@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% block title %}Satellite Detection{% endblock %}
+
+{% block extra_head %}
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+<style>
+    .page-wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 4rem;
+    }
+    @media (max-width: 767px) { .page-wrap { padding: 1.5rem 1rem 2rem; } }
+
+    /* ── Page Header ───────────────────────────────────────────── */
+    .page-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(62,207,142,0.12);
+        border: 1px solid rgba(62,207,142,0.25);
+        color: var(--accent-green);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.3rem 0.85rem;
+        border-radius: 999px;
+        margin-bottom: 0.85rem;
+        letter-spacing: 0.05em;
+    }
+
+    .page-title {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.4rem;
+    }
+
+    .page-title span { color: var(--accent-green); }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+
+    /* ── Card Panel ────────────────────────────────────────────── */
+    .card-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.75rem 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 0.9rem;
+    }
+
+    /* ── Search Bar ────────────────────────────────────────────── */
+    .search-row {
+        display: flex;
+        gap: 0;
+        margin-bottom: 1.25rem;
+        position: relative;
+    }
+
+    .search-input {
+        flex: 1;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        padding: 0.7rem 1rem;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--accent-green); }
+
+    .search-btn {
+        background: var(--accent-green);
+        color: #fff;
+        border: none;
+        border-radius: 0 10px 10px 0;
+        padding: 0.7rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: opacity 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .search-btn:hover { opacity: 0.88; }
+
+    /* ── Suggestions ───────────────────────────────────────────── */
+    #suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 60px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 999;
+    }
+
+    .suggestion-item {
+        padding: 0.65rem 1rem;
+        cursor: pointer;
+        font-size: 0.87rem;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border);
+        transition: background 0.15s;
+    }
+
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--bg-secondary); }
+
+    /* ── Map ───────────────────────────────────────────────────── */
+    #map {
+        width: 100%;
+        height: 360px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+
+    /* ── Predict Button ────────────────────────────────────────── */
+    .predict-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 0.85rem;
+        background: var(--accent-green);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.2s;
+        font-family: inherit;
+        margin-top: 1.25rem;
+        letter-spacing: 0.03em;
+    }
+
+    .predict-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Results Grid ──────────────────────────────────────────── */
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.25rem;
+    }
+    @media (max-width: 600px) { .results-grid { grid-template-columns: 1fr; } }
+
+    .result-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.4rem 1.5rem;
+    }
+
+    .result-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+    }
+
+    .result-card-title .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dot-green  { background: var(--accent-green); }
+    .dot-blue   { background: var(--accent-blue); }
+    .dot-orange { background: var(--accent-orange); }
+
+    .result-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        min-height: 1.5rem;
+    }
+
+    .confidence-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-bottom: 0.35rem;
+    }
+
+    .confidence-track {
+        background: var(--bg-secondary);
+        border-radius: 999px;
+        height: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+    .confidence-fill {
+        height: 100%;
+        border-radius: 999px;
+        width: 0%;
+        transition: width 0.6s ease;
+    }
+
+    .fill-green  { background: var(--accent-green); }
+    .fill-blue   { background: var(--accent-blue); }
+    .fill-orange { background: var(--accent-orange); }
+
+    /* ── Disclaimer ────────────────────────────────────────────── */
+    .disclaimer {
+        margin-top: 1.5rem;
+        padding: 0.9rem 1.2rem;
+        background: rgba(245,158,11,0.08);
+        border: 1px solid rgba(245,158,11,0.2);
+        border-radius: 10px;
+        color: #f59e0b;
+        font-size: 0.82rem;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .disclaimer i { margin-top: 2px; flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+
+    <!-- Header -->
+    <div class="page-badge"><i class="fas fa-satellite"></i> Satellite AI</div>
+    <h1 class="page-title">Satellite <span>Detection</span></h1>
+    <p class="page-subtitle">Search a location on the map, then run the AI to detect wildfire hotspots from satellite imagery combined with live weather data.</p>
+
+    <!-- Map Card -->
+    <div class="card-panel">
+        <div class="section-label"><i class="fas fa-map-location-dot"></i> &nbsp;Select Location</div>
+
+        <div class="search-row">
+            <input type="text" id="search" class="search-input" placeholder="Search a location..." autocomplete="off">
+            <div id="suggestions"></div>
+            <button id="searchBtn" class="search-btn">
+                <i class="fas fa-magnifying-glass"></i> Search
+            </button>
+        </div>
+
+        <div id="map"></div>
+
+        <button id="predictBtn" class="predict-btn">
+            <i class="fas fa-fire"></i> Detect Wildfire
+        </button>
+    </div>
+
+    <!-- Results -->
+    <div class="results-grid">
+
+        <!-- Satellite -->
+        <div class="result-card">
+            <div class="result-card-title">
+                <span class="dot dot-green"></span>
+                <span style="color:var(--text-muted)">Satellite Prediction</span>
+            </div>
+            <div id="satellitePredictionResult" class="result-value">Awaiting analysis…</div>
+            <div class="confidence-label">
+                <span>Confidence</span>
+                <span id="satelliteConfidenceText">—</span>
+            </div>
+            <div class="confidence-track">
+                <div id="satelliteConfidenceBar" class="confidence-fill fill-green"></div>
+            </div>
+        </div>
+
+        <!-- Weather -->
+        <div class="result-card">
+            <div class="result-card-title">
+                <span class="dot dot-blue"></span>
+                <span style="color:var(--text-muted)">Weather Prediction</span>
+            </div>
+            <div id="weatherPredictionResult" class="result-value">Awaiting analysis…</div>
+            <div class="confidence-label">
+                <span>Confidence</span>
+                <span id="weatherConfidenceText">—</span>
+            </div>
+            <div class="confidence-track">
+                <div id="weatherConfidenceBar" class="confidence-fill fill-blue"></div>
+            </div>
+        </div>
+
+        <!-- Combined -->
+        <div class="result-card">
+            <div class="result-card-title">
+                <span class="dot dot-orange"></span>
+                <span style="color:var(--text-muted)">Combined Prediction</span>
+            </div>
+            <div id="combinedPredictionResult" class="result-value">Awaiting analysis…</div>
+            <div class="confidence-label">
+                <span>Confidence</span>
+                <span id="combinedConfidenceText">—</span>
+            </div>
+            <div class="confidence-track">
+                <div id="combinedConfidenceBar" class="confidence-fill fill-orange"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span>These predictions indicate the likelihood of a wildfire and are not guaranteed to be accurate. Always verify with official sources.</span>
+    </div>
+
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>mapboxgl.accessToken = "{{ MAPBOX_TOKEN }}";</script>
+{% endblock %}
