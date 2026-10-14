@@ -11,7 +11,7 @@
 **Built by Touseef Ur Rehman**
 </div>
 
-![Wildfire](https://medforest.net/wp-content/uploads/2019/03/forest-fire-2268725_1280.jpg)
+![Wildfire](https://images.pexels.com/photos/33802507/pexels-photo-33802507.jpeg)
 
 ## Table of Contents 📚
 
