@@ -11,21 +11,26 @@
 **Built by Touseef Ur Rehman**
 </div>
 
-![Wildfire](https://images.pexels.com/photos/33802507/pexels-photo-33802507.jpeg)
+## Demo 🎥
+
+https://github.com/user-attachments/assets/7fb2bc93-6a12-4339-9da1-d7dd11948fdb
+
+---
 
 ## Table of Contents 📚
 
 1. [Background on Wildfires 🌍](#background-on-wildfires-)
 2. [Project Overview 🚀](#project-overview-)
 3. [Features 🌟](#features-)
-4. [Screenshot 📸](#screenshot-)
-5. [Installation 🛠️](#installation-%EF%B8%8F)
-6. [Usage 💻](#usage-)
-7. [File Structure 📁](#file-structure-)
-8. [Requirements 📦](#requirements-)
-9. [Improvements ✨](#improvements-)
-10. [Contributing 🤝](#contributing-)
-11. [License 📜](#license-)
+4. [Demo 🎥](#demo-)
+5. [Screenshot 📸](#screenshot-)
+6. [Installation 🛠️](#installation-%EF%B8%8F)
+7. [Usage 💻](#usage-)
+8. [File Structure 📁](#file-structure-)
+9. [Requirements 📦](#requirements-)
+10. [Improvements ✨](#improvements-)
+11. [Contributing 🤝](#contributing-)
+12. [License 📜](#license-)
 
 ---
 
@@ -62,12 +67,6 @@ The system includes three models:
 - **Camera Detection** — Upload images from cameras or drones for real-time fire identification.
 - **Weather Prediction** — Assess wildfire risk using current meteorological conditions.
 - **Email Alerts** — Get hourly email notifications for wildfire risk in any location you specify.
-
----
-
-## Screenshot 📸
-
-![Screenshot](src/static/images/Screenshot.png)
 
 ---
 
